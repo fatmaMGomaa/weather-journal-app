@@ -8,14 +8,14 @@ let newDate = d.getMonth()+ 1 +'.'+ d.getDate()+'.'+ d.getFullYear();
 document.getElementById('generate').addEventListener('click', performAction);
 
 function performAction(e){
-  const zip_code = document.getElementById('zip').value;
-  const user_response = document.getElementById('feelings').value;
+  const zip_code = document.getElementById('zip').value.trim();
+  const user_response = document.getElementById('feelings').value.trim();
   if (zip_code) {
     getWeatherTemp(base_url, api_key, zip_code)
     .then(data => {
       postData('/addTemp', {temp: data.main.temp, date: newDate, user_response: user_response});
+      updateUI();
     })
-    .then(updateUI())
   } else {
     alert("YOU MUST ENTER A ZIP CODE");
   }
@@ -24,11 +24,14 @@ function performAction(e){
 const getWeatherTemp = async (base_url, api_key, zip_code = '') =>{
   const res = await fetch(`${base_url}&zip=${zip_code}`)
   try {
-    const data = await res.json();
-    return data;
+    if (res.status == 200){
+      const data = await res.json();
+      return data;
+    }else{
+      throw new Error('Could not find temperture for this zip code.');
+    }
   } catch(error) {
-    console.log(error);
-    alert("something went wrong, please try again later.");
+    alert(error);
   }
 };
 
@@ -42,12 +45,14 @@ const postData = async ( url = '', data = {}) => {
     body: JSON.stringify(data), 
   });
   try {
-    const newData = await response.json();
-    console.log(newData);
-    return newData;
+    if (response.status == 200){
+      const newData = await response.json();
+      return;
+    } else {
+      throw new Error('Could not post your last entry.');
+    }
   } catch(error) {
-    console.log(error);
-    alert("something went wrong, please try again later.");
+    alert(error);
   }
 }
 
@@ -55,10 +60,14 @@ const updateUI = async () => {
   const request = await fetch('/getData');
   try{
     const allData = await request.json();
-    document.getElementById('date').innerHTML = `Date: ${allData.date}`;
-    document.getElementById('temp').innerHTML = `Temperature: ${allData.temp}`;
-    document.getElementById('content').innerHTML = `Your Feelings: ${allData.user_response}`;
+    if (allData){
+      document.getElementById('date').innerHTML = `Date: ${allData.date}`;
+      document.getElementById('temp').innerHTML = `Temperature: ${allData.temp}`;
+      document.getElementById('content').innerHTML = `Your Feelings: ${allData.user_response}`;
+    } else {
+      throw new Error('Could not update your UI.');
+    }
   }catch(error){
-    console.log("error", error);
+    alert(error);
   }
 }

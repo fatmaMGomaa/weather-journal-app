@@ -1,5 +1,5 @@
 // Setup empty JS object to act as endpoint for all routes
-projectData = {};
+projectData = {temp: '', date: '', user_response: ''};
 const port = 5500;
 
 // Require Express to run server and routes
